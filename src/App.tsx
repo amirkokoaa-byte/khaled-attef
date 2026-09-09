@@ -89,7 +89,9 @@ function MainApp() {
   const handleDeleteGalleryItem = (id: string) => updateDataAndSync({ ...data, gallery: data.gallery.filter(item => item.id !== id) });
   const handleAddGalleryItem = (item: MediaItem) => updateDataAndSync({ ...data, gallery: [item, ...data.gallery] });
   const handleAddStudioItem = (item: MediaItem) => updateDataAndSync({ ...data, studio: [item, ...data.studio] });
+  const handleDeleteStudioItem = (id: string) => updateDataAndSync({ ...data, studio: data.studio.filter(item => item.id !== id) });
   const handleAddExhibition = (item: ExhibitionItem) => updateDataAndSync({ ...data, exhibitions: [item, ...data.exhibitions] });
+  const handleDeleteExhibition = (id: string) => updateDataAndSync({ ...data, exhibitions: data.exhibitions.filter(item => item.id !== id) });
 
   // Add fake base visitor count to actual
   const displayVisitorCount = (data.visitorCount || 0) + (data.baseVisitorCount || 0);
@@ -162,6 +164,7 @@ function MainApp() {
               studio={data.studio}
               isAdmin={isAdmin}
               onAddMedia={handleAddStudioItem}
+              onDeleteMedia={handleDeleteStudioItem}
               uniqueCountries={countries}
             />
           )}
@@ -172,6 +175,7 @@ function MainApp() {
               selectedCountry={selectedCountry}
               isAdmin={isAdmin}
               onAddExhibition={handleAddExhibition}
+              onDeleteExhibition={handleDeleteExhibition}
             />
           )}
         </div>

@@ -115,7 +115,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
       </div>
 
       {isAdmin && (
-        <div className="absolute top-2 left-2 flex gap-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+        <div className="absolute top-2 left-2 flex gap-1 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
           <button 
             onClick={onEdit}
             className="magnetic p-1.5 bg-slate-800/90 hover:bg-slate-700 text-indigo-400 rounded-md shadow-sm backdrop-blur-sm transition-colors border border-slate-600"

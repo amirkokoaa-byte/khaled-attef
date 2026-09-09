@@ -1,6 +1,6 @@
 import { useAppContext } from "../context";
 import { useState, useMemo } from 'react';
-import { Plus, Play } from 'lucide-react';
+import { Plus, Play, Trash2 } from 'lucide-react';
 import type { ExhibitionItem, MediaItem } from '../types';
 import { UnifiedLightbox } from './UnifiedLightbox';
 import { AddExhibitionModal } from './AddExhibitionModal';
@@ -10,9 +10,10 @@ interface ExhibitionSectionProps {
   selectedCountry: string;
   isAdmin: boolean;
   onAddExhibition: (item: ExhibitionItem) => void;
+  onDeleteExhibition: (id: string) => void;
 }
 
-export function ExhibitionSection({ exhibitions, selectedCountry, isAdmin, onAddExhibition }: ExhibitionSectionProps) {
+export function ExhibitionSection({ exhibitions, selectedCountry, isAdmin, onAddExhibition, onDeleteExhibition }: ExhibitionSectionProps) {
   const { t } = useAppContext();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [lightboxState, setLightboxState] = useState<{ isOpen: boolean; initialIndex: number; items: MediaItem[] }>({
@@ -26,6 +27,13 @@ export function ExhibitionSection({ exhibitions, selectedCountry, isAdmin, onAdd
     if (selectedCountry === 'الكل') return exhibitions;
     return exhibitions.filter(ex => ex.country === selectedCountry);
   }, [exhibitions, selectedCountry]);
+
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (confirm('هل أنت متأكد من حذف هذا المعرض بالكامل؟')) {
+      onDeleteExhibition(id);
+    }
+  };
 
   const openLightbox = (items: MediaItem[], itemToOpen: MediaItem) => {
     const initialIndex = items.findIndex(i => i.id === itemToOpen.id);

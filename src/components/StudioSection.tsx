@@ -1,6 +1,6 @@
 import { useAppContext } from "../context";
 import { useState } from 'react';
-import { Plus, Play } from 'lucide-react';
+import { Plus, Play, Trash2 } from 'lucide-react';
 import type { MediaItem } from '../types';
 import { UnifiedLightbox } from './UnifiedLightbox';
 import { AddMediaModal } from './AddMediaModal';
@@ -9,10 +9,11 @@ interface StudioSectionProps {
   studio: MediaItem[];
   isAdmin: boolean;
   onAddMedia: (item: MediaItem) => void;
+  onDeleteMedia: (id: string) => void;
   uniqueCountries: string[];
 }
 
-export function StudioSection({ studio, isAdmin, onAddMedia, uniqueCountries }: StudioSectionProps) {
+export function StudioSection({ studio, isAdmin, onAddMedia, onDeleteMedia, uniqueCountries }: StudioSectionProps) {
   const { t } = useAppContext();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [lightboxState, setLightboxState] = useState<{ isOpen: boolean; initialIndex: number; items: MediaItem[] }>({
@@ -20,6 +21,13 @@ export function StudioSection({ studio, isAdmin, onAddMedia, uniqueCountries }: 
     initialIndex: 0,
     items: []
   });
+
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (confirm('هل أنت متأكد من حذف هذا العنصر؟')) {
+      onDeleteMedia(id);
+    }
+  };
 
   const openLightbox = (items: MediaItem[], itemToOpen: MediaItem) => {
     const initialIndex = items.findIndex(i => i.id === itemToOpen.id);
@@ -52,11 +60,21 @@ export function StudioSection({ studio, isAdmin, onAddMedia, uniqueCountries }: 
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {studio.map(item => (
+              
               <div 
                 key={item.id} 
-                className="group cursor-pointer bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col"
+                className="group cursor-pointer bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col relative"
                 onClick={() => openLightbox(studio, item)}
               >
+                {isAdmin && (
+                  <button 
+                    onClick={(e) => handleDelete(e, item.id)}
+                    className="absolute top-2 left-2 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 p-2 bg-red-500/80 hover:bg-red-500 text-white rounded-lg backdrop-blur-sm transition-all"
+                    title="حذف"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
                 <div className="relative w-full aspect-[4/3] overflow-hidden">
                   <img 
                     src={item.thumbnailUrl} 

@@ -322,7 +322,7 @@ export function AdminAuth({ isAdmin, setIsAdmin, data, onUpdateData }: AdminAuth
                             <img src={banner.url} className="w-full h-full object-cover" alt="Banner" />
                             <button 
                               onClick={() => handleDeleteBanner(banner.id)}
-                              className="absolute inset-0 bg-red-500/80 hidden group-hover:flex items-center justify-center text-white backdrop-blur-sm transition-all"
+                              className="absolute inset-0 bg-red-500/80 flex opacity-100 md:opacity-0 md:group-hover:opacity-100 items-center justify-center text-white backdrop-blur-sm transition-all"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
