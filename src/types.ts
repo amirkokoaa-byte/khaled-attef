@@ -4,7 +4,9 @@ export interface MediaItem {
   url: string;
   thumbnailUrl: string;
   title: string;
+  subtitle?: string;
   country: string;
+  metadata?: string;
 }
 
 export interface ExhibitionItem {
@@ -14,18 +16,27 @@ export interface ExhibitionItem {
   media: MediaItem[];
 }
 
+export interface Job {
+  title: string;
+  duration?: string;
+}
+
 export interface PortfolioData {
-  bannerImage: string;
+  bannerImage: string; // Legacy support
+  bannerImages?: string[]; // New multiple banners
   profileImage: string;
   aboutMe: {
     name: string;
-    jobTitle: string;
+    jobTitle: string; // Legacy support
+    jobs?: Job[]; // New multiple jobs
     company: string;
     yearsOfExperience: string;
     phoneNumbers: string[];
     emails: string[];
     facebookLink: string;
     websiteLink: string;
+    linkedInLink?: string; // New
+    mapLink?: string; // New
   };
   gallery: MediaItem[];
   studio: MediaItem[];
@@ -34,14 +45,23 @@ export interface PortfolioData {
 
 export const defaultPortfolioData: PortfolioData = {
   bannerImage: "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&q=80&w=2000",
+  bannerImages: [
+    "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&q=80&w=2000",
+    "https://images.unsplash.com/photo-1557682250-33bd709cbe85?auto=format&fit=crop&q=80&w=2000",
+    "https://images.unsplash.com/photo-1557683316-973673baf926?auto=format&fit=crop&q=80&w=2000"
+  ],
   profileImage: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=400&h=400",
   aboutMe: {
-    name: "أمير لمعي محمود",
-    jobTitle: "مدير التنسيق والاتش آر",
-    company: "سوفت روز إنترناشيونال",
+    name: "خالد عاطف",
+    jobTitle: "مصمم جرافيك", // Legacy support
+    jobs: [
+      { title: "مصمم جرافيك", duration: "10 سنوات" },
+      { title: "مدير فني", duration: "5 سنوات" }
+    ],
+    company: "مستقل",
     yearsOfExperience: "10 سنوات",
     phoneNumbers: ["+20 123 456 7890"],
-    emails: ["amir@example.com"],
+    emails: ["khaled@example.com"],
     facebookLink: "https://facebook.com",
     websiteLink: "https://example.com"
   },

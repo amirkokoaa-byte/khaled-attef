@@ -1,20 +1,110 @@
-import { useState, useMemo } from 'react';
-import { LayoutGrid, List, Play, Plus } from 'lucide-react';
+import React, { useState, useMemo, useRef } from 'react';
+import { LayoutGrid, List, Play, Plus, Edit2, Trash2, Info } from 'lucide-react';
 import type { MediaItem } from '../types';
 import { UnifiedLightbox } from './UnifiedLightbox';
 import { AddMediaModal } from './AddMediaModal';
+import { EditMediaModal } from './EditMediaModal';
 
 interface PortfolioSectionProps {
   gallery: MediaItem[];
   selectedCountry: string;
   isAdmin: boolean;
   onAddMedia: (item: MediaItem) => void;
+  onEditMedia: (item: MediaItem) => void;
+  onDeleteMedia: (id: string) => void;
   uniqueCountries: string[];
 }
 
-export function PortfolioSection({ gallery, selectedCountry, isAdmin, onAddMedia, uniqueCountries }: PortfolioSectionProps) {
+function MediaCard({ 
+  item, 
+  viewMode, 
+  onClick, 
+  isAdmin, 
+  onEdit, 
+  onDelete 
+}: { 
+  item: MediaItem, 
+  viewMode: 'grid' | 'list', 
+  onClick: () => void,
+  isAdmin: boolean,
+  onEdit: (e: React.MouseEvent) => void,
+  onDelete: (e: React.MouseEvent) => void
+}) {
+  const [metadata, setMetadata] = useState(item.metadata || '');
+
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    if (!metadata && item.type === 'image') {
+      const target = e.target as HTMLImageElement;
+      setMetadata(`${target.naturalWidth}x${target.naturalHeight}`);
+    }
+  };
+
+  return (
+    <div 
+      className={`group bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 relative ${
+        viewMode === 'list' ? 'flex flex-row h-32 md:h-40' : 'flex flex-col'
+      }`}
+    >
+      <div 
+        className={`relative overflow-hidden cursor-pointer ${viewMode === 'list' ? 'w-1/3 min-w-[120px] h-full' : 'w-full aspect-[4/3]'}`}
+        onClick={onClick}
+      >
+        <img 
+          src={item.thumbnailUrl} 
+          alt={item.title} 
+          onLoad={handleImageLoad}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+        {item.type === 'video' && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="bg-black/50 p-3 rounded-full backdrop-blur-sm">
+              <Play className="w-6 h-6 text-white" fill="white" />
+            </div>
+          </div>
+        )}
+      </div>
+      
+      <div className={`p-4 flex flex-col justify-center ${viewMode === 'list' ? 'w-2/3' : 'w-full'}`}>
+        <h4 className="text-lg font-bold text-slate-800 transition-colors">{item.title}</h4>
+        {item.subtitle && <p className="text-sm text-indigo-600 font-medium">{item.subtitle}</p>}
+        <p className="text-sm text-slate-500 mt-1">{item.type === 'video' ? 'فيديو' : 'صورة'}</p>
+        
+        {metadata && (
+          <div className="mt-2 flex items-center gap-1 text-xs text-slate-400 font-mono bg-slate-50 w-fit px-2 py-1 rounded">
+            <Info className="w-3 h-3" />
+            {metadata}
+          </div>
+        )}
+      </div>
+
+      {isAdmin && (
+        <div className="absolute top-2 left-2 flex gap-1 z-10">
+          <button 
+            onClick={onEdit}
+            className="p-1.5 bg-white/90 hover:bg-white text-indigo-600 rounded-md shadow-sm backdrop-blur-sm transition-colors"
+            title="تعديل"
+          >
+            <Edit2 className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={onDelete}
+            className="p-1.5 bg-white/90 hover:bg-white text-red-600 rounded-md shadow-sm backdrop-blur-sm transition-colors"
+            title="حذف"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function PortfolioSection({ gallery, selectedCountry, isAdmin, onAddMedia, onEditMedia, onDeleteMedia, uniqueCountries }: PortfolioSectionProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [itemToEdit, setItemToEdit] = useState<MediaItem | null>(null);
+  
   const [lightboxState, setLightboxState] = useState<{ isOpen: boolean; initialIndex: number; items: MediaItem[] }>({
     isOpen: false,
     initialIndex: 0,
@@ -45,6 +135,18 @@ export function PortfolioSection({ gallery, selectedCountry, isAdmin, onAddMedia
     });
   };
 
+  const handleEdit = (e: React.MouseEvent, item: MediaItem) => {
+    e.stopPropagation();
+    setItemToEdit(item);
+  };
+
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (confirm('هل أنت متأكد من حذف هذا العمل؟')) {
+      onDeleteMedia(id);
+    }
+  };
+
   return (
     <div className="w-full flex flex-col pt-6 pb-12 space-y-10" dir="rtl">
       {/* 1. Continuous Auto-Scrolling Banner (Marquee) - Always shows all items */}
@@ -62,7 +164,7 @@ export function PortfolioSection({ gallery, selectedCountry, isAdmin, onAddMedia
                 onClick={() => openLightbox(gallery, item)}
               >
                 <img src={item.thumbnailUrl} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 group-hover/item:scale-110" />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/item:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/item:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
                   {item.type === 'video' ? <Play className="w-10 h-10 text-white" /> : null}
                 </div>
               </div>
@@ -115,7 +217,7 @@ export function PortfolioSection({ gallery, selectedCountry, isAdmin, onAddMedia
           {Object.entries(groupedGallery).length === 0 ? (
             <div className="text-center text-slate-500 py-12">لا توجد أعمال لعرضها هنا.</div>
           ) : (
-            Object.entries(groupedGallery).map(([country, items]) => (
+            Object.entries(groupedGallery).map(([country, items]: [string, MediaItem[]]) => (
               <div key={country} className="space-y-6">
                 <h3 className="text-xl font-bold text-indigo-800 flex items-center gap-2">
                   <span className="w-8 h-1 bg-indigo-500 rounded-full"></span>
@@ -128,34 +230,15 @@ export function PortfolioSection({ gallery, selectedCountry, isAdmin, onAddMedia
                     : "flex flex-col space-y-4"
                 }>
                   {items.map(item => (
-                    <div 
+                    <MediaCard 
                       key={item.id} 
-                      className={`group cursor-pointer bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 ${
-                        viewMode === 'list' ? 'flex flex-row h-32 md:h-40' : 'flex flex-col'
-                      }`}
-                      onClick={() => openLightbox(items, item)}
-                    >
-                      <div className={`relative overflow-hidden ${viewMode === 'list' ? 'w-1/3 min-w-[120px] h-full' : 'w-full aspect-[4/3]'}`}>
-                        <img 
-                          src={item.thumbnailUrl} 
-                          alt={item.title} 
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        {item.type === 'video' && (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="bg-black/50 p-3 rounded-full backdrop-blur-sm">
-                              <Play className="w-6 h-6 text-white" fill="white" />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className={`p-4 flex flex-col justify-center ${viewMode === 'list' ? 'w-2/3' : 'w-full'}`}>
-                        <h4 className="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">{item.title}</h4>
-                        <p className="text-sm text-slate-500 mt-1">{item.type === 'video' ? 'فيديو' : 'صورة'}</p>
-                      </div>
-                    </div>
+                      item={item} 
+                      viewMode={viewMode} 
+                      onClick={() => openLightbox(items, item)} 
+                      isAdmin={isAdmin}
+                      onEdit={(e) => handleEdit(e, item)}
+                      onDelete={(e) => handleDelete(e, item.id)}
+                    />
                   ))}
                 </div>
               </div>
@@ -178,6 +261,15 @@ export function PortfolioSection({ gallery, selectedCountry, isAdmin, onAddMedia
         countries={uniqueCountries}
         title="إضافة عمل جديد"
       />
+
+      {itemToEdit && (
+        <EditMediaModal
+          isOpen={true}
+          onClose={() => setItemToEdit(null)}
+          item={itemToEdit}
+          onSave={onEditMedia}
+        />
+      )}
     </div>
   );
 }

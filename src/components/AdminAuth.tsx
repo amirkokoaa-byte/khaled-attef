@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { Settings, X, LogOut, KeyRound } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 

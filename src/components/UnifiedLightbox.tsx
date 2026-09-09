@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, ChevronRight, ChevronLeft, Download, Play } from 'lucide-react';
 import type { MediaItem } from '../types';
 
