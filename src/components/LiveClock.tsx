@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useAppContext } from '../context';
 
 export function LiveClock() {
+  const { lang } = useAppContext();
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -8,14 +10,16 @@ export function LiveClock() {
     return () => clearInterval(timer);
   }, []);
 
-  const formattedDate = time.toLocaleDateString('ar-EG', {
+  const locale = lang === 'ar' ? 'ar-EG' : 'en-US';
+
+  const formattedDate = time.toLocaleDateString(locale, {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
 
-  const formattedTime = time.toLocaleTimeString('ar-EG', {
+  const formattedTime = time.toLocaleTimeString(locale, {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
@@ -23,8 +27,9 @@ export function LiveClock() {
   });
 
   return (
-    <div className="flex flex-col items-end text-sm sm:text-base font-medium text-slate-800 bg-white/80 backdrop-blur-md px-4 py-2 rounded-xl shadow-sm border border-slate-200">
-      <span dir="rtl">{formattedDate}</span>
+    <div className="flex flex-row items-center gap-3 text-sm sm:text-base font-bold text-slate-200 bg-slate-800/80 backdrop-blur-md px-5 py-3 rounded-xl shadow-lg border border-slate-700">
+      <span dir={lang === 'ar' ? 'rtl' : 'ltr'}>{formattedDate}</span>
+      <span className="w-px h-4 bg-slate-600"></span>
       <span dir="ltr">{formattedTime}</span>
     </div>
   );

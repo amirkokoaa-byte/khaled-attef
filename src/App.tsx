@@ -12,66 +12,62 @@ import { PortfolioSection } from './components/PortfolioSection';
 import { StudioSection } from './components/StudioSection';
 import { ExhibitionSection } from './components/ExhibitionSection';
 import { AdminAuth } from './components/AdminAuth';
+import { ReviewsSection } from "./components/ReviewsSection";
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { defaultPortfolioData, PortfolioData, MediaItem, ExhibitionItem } from './types';
 import { db, saveToFirebase } from './lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, increment, onSnapshot } from 'firebase/firestore';
 import { AppProvider, useAppContext } from './context';
-import { Moon, Sun, Globe } from 'lucide-react';
-
-function TopBar() {
-  const { lang, setLang, theme, setTheme } = useAppContext();
-
-  return (
-    <div className="absolute top-4 left-16 md:left-20 z-50 flex gap-2">
-      <button 
-        onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
-        className="p-2 bg-white/90 hover:bg-white text-slate-700 rounded-full shadow-lg backdrop-blur-sm transition-transform hover:scale-110 flex items-center justify-center font-bold text-xs w-9 h-9"
-        title="تغيير اللغة"
-      >
-        {lang === 'ar' ? 'EN' : 'عربي'}
-      </button>
-      <button 
-        onClick={() => setTheme(theme === 'default' ? 'navy' : 'default')}
-        className="p-2 bg-white/90 hover:bg-white text-slate-700 rounded-full shadow-lg backdrop-blur-sm transition-transform hover:scale-110 flex items-center justify-center w-9 h-9"
-        title="تغيير المظهر"
-      >
-        {theme === 'default' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4 text-amber-500" />}
-      </button>
-    </div>
-  );
-}
+import { FloatingWhatsApp } from './components/FloatingWhatsApp';
 
 function MainApp() {
-  const { theme } = useAppContext();
+  const { lang, setLang } = useAppContext();
   const [data, setData] = useLocalStorage<PortfolioData>('portfolio-data-v1', defaultPortfolioData);
   const [activeTab, setActiveTab] = useState('portfolio');
   const [selectedCountry, setSelectedCountry] = useState('الكل');
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Fetch data from Firebase on mount (stale-while-revalidate pattern)
+  // Real-time Fetch & Visitor Tracking
   useEffect(() => {
-    const fetchData = async () => {
-      if (!db) return; 
-      try {
-        const docRef = doc(db, 'siteData', 'portfolio-data-v1');
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const firebaseData = docSnap.data() as PortfolioData;
-          setData(firebaseData);
-        }
-      } catch (error: any) {
-        if (error.message?.includes('offline')) {
-          console.warn("Firebase is offline or unavailable. Using local storage.");
-        } else {
-          console.error("Error fetching data from Firebase:", error);
+    if (!db) return; 
+
+    // Increment visitor count once per session
+    const incrementVisitor = async () => {
+      const hasVisited = sessionStorage.getItem('hasVisited_v1');
+      if (!hasVisited && !isAdmin) {
+        try {
+          const docRef = doc(db, 'siteData', 'portfolio-data-v1');
+          const snap = await getDoc(docRef);
+          if (snap.exists()) {
+            await updateDoc(docRef, {
+              visitorCount: increment(1)
+            });
+            sessionStorage.setItem('hasVisited_v1', 'true');
+          }
+        } catch (err: any) {
+          if (err.message?.includes('offline')) {
+            console.warn("Firebase is offline. Visitor count not updated.");
+          } else {
+            console.error("Could not increment visitor count:", err);
+          }
         }
       }
     };
-    fetchData();
-  }, [setData]);
+    
+    incrementVisitor();
 
-  // Extract unique countries from the gallery AND exhibitions
+    // Listen to real-time changes
+    const docRef = doc(db, 'siteData', 'portfolio-data-v1');
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setData(docSnap.data() as PortfolioData);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [isAdmin, setData]);
+
+  // Extract unique countries
   const countries = useMemo(() => {
     const uniqueCountries = new Set<string>();
     data.gallery.forEach(item => uniqueCountries.add(item.country));
@@ -84,50 +80,37 @@ function MainApp() {
     saveToFirebase('siteData', 'portfolio-data-v1', newData); 
   };
 
-  // --- Callbacks for Edits ---
-  
-  const handleUpdateAboutMe = (aboutMe: PortfolioData['aboutMe']) => {
-    updateDataAndSync({ ...data, aboutMe });
-  };
+  const handleUpdateAboutMe = (aboutMe: PortfolioData['aboutMe']) => updateDataAndSync({ ...data, aboutMe });
+  const handleUpdateProfile = (url: string) => updateDataAndSync({ ...data, profileImage: url });
+  const handleUpdateBanners = (urls: string[]) => updateDataAndSync({ ...data, bannerImages: urls });
+  const handleEditGalleryItem = (updatedItem: MediaItem) => updateDataAndSync({ ...data, gallery: data.gallery.map(item => item.id === updatedItem.id ? updatedItem : item) });
+  const handleDeleteGalleryItem = (id: string) => updateDataAndSync({ ...data, gallery: data.gallery.filter(item => item.id !== id) });
+  const handleAddGalleryItem = (item: MediaItem) => updateDataAndSync({ ...data, gallery: [item, ...data.gallery] });
+  const handleAddStudioItem = (item: MediaItem) => updateDataAndSync({ ...data, studio: [item, ...data.studio] });
+  const handleAddExhibition = (item: ExhibitionItem) => updateDataAndSync({ ...data, exhibitions: [item, ...data.exhibitions] });
 
-  const handleUpdateProfile = (url: string) => {
-    updateDataAndSync({ ...data, profileImage: url });
-  };
-
-  const handleUpdateBanners = (urls: string[]) => {
-    updateDataAndSync({ ...data, bannerImages: urls });
-  };
-
-  const handleEditGalleryItem = (updatedItem: MediaItem) => {
-    updateDataAndSync({
-      ...data,
-      gallery: data.gallery.map(item => item.id === updatedItem.id ? updatedItem : item)
-    });
-  };
-
-  const handleDeleteGalleryItem = (id: string) => {
-    updateDataAndSync({
-      ...data,
-      gallery: data.gallery.filter(item => item.id !== id)
-    });
-  };
-
-  const handleAddGalleryItem = (item: MediaItem) => {
-    updateDataAndSync({ ...data, gallery: [item, ...data.gallery] });
-  };
-
-  const handleAddStudioItem = (item: MediaItem) => {
-    updateDataAndSync({ ...data, studio: [item, ...data.studio] });
-  };
-
-  const handleAddExhibition = (item: ExhibitionItem) => {
-    updateDataAndSync({ ...data, exhibitions: [item, ...data.exhibitions] });
-  };
+  // Add fake base visitor count to actual
+  const displayVisitorCount = (data.visitorCount || 0) + (data.baseVisitorCount || 0);
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans transition-colors duration-500 ${theme === 'navy' ? 'bg-gray-100 text-slate-900' : 'bg-slate-50 text-slate-800'}`}>
-      <AdminAuth isAdmin={isAdmin} setIsAdmin={setIsAdmin} />
-      <TopBar />
+    <div className="min-h-screen flex flex-col font-sans bg-slate-900 text-slate-100 transition-colors duration-500">
+      
+      {/* Absolute top-left lang switch */}
+      <div className="absolute top-4 left-4 md:left-6 z-50">
+        <button 
+          onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
+          className="magnetic p-2 bg-slate-800/90 hover:bg-slate-700 text-white rounded-full shadow-lg backdrop-blur-sm transition-all flex items-center justify-center font-bold text-xs w-10 h-10 border border-slate-700"
+        >
+          {lang === 'ar' ? 'EN' : 'عربي'}
+        </button>
+      </div>
+
+      <AdminAuth 
+        isAdmin={isAdmin} 
+        setIsAdmin={setIsAdmin} 
+        data={data}
+        onUpdateData={updateDataAndSync}
+      />
 
       <Header 
         bannerImages={data.bannerImages || [data.bannerImage]}
@@ -155,7 +138,7 @@ function MainApp() {
           />
         </div>
 
-        {/* Dynamic Main Content based on Active Tab */}
+        {/* Dynamic Main Content */}
         <div className="w-full min-h-[500px]">
           {activeTab === 'portfolio' && (
             <PortfolioSection 
@@ -189,7 +172,11 @@ function MainApp() {
         </div>
       </main>
 
-      <Footer />
+      <ReviewsSection />
+      <Footer visitorCount={displayVisitorCount} />
+
+      {/* Floating WhatsApp */}
+      <FloatingWhatsApp phoneNumber={data.aboutMe.whatsappNumber || data.aboutMe.phoneNumbers[0]} />
     </div>
   );
 }

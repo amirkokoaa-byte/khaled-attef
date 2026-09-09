@@ -1,3 +1,4 @@
+import { useAppContext } from "../context";
 import { useState } from 'react';
 import { Plus, Play } from 'lucide-react';
 import type { MediaItem } from '../types';
@@ -12,6 +13,7 @@ interface StudioSectionProps {
 }
 
 export function StudioSection({ studio, isAdmin, onAddMedia, uniqueCountries }: StudioSectionProps) {
+  const { t } = useAppContext();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [lightboxState, setLightboxState] = useState<{ isOpen: boolean; initialIndex: number; items: MediaItem[] }>({
     isOpen: false,

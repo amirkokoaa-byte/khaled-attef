@@ -1,3 +1,4 @@
+import { useAppContext } from "../context";
 import { useState, useMemo } from 'react';
 import { Plus, Play } from 'lucide-react';
 import type { ExhibitionItem, MediaItem } from '../types';
@@ -12,6 +13,7 @@ interface ExhibitionSectionProps {
 }
 
 export function ExhibitionSection({ exhibitions, selectedCountry, isAdmin, onAddExhibition }: ExhibitionSectionProps) {
+  const { t } = useAppContext();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [lightboxState, setLightboxState] = useState<{ isOpen: boolean; initialIndex: number; items: MediaItem[] }>({
     isOpen: false,

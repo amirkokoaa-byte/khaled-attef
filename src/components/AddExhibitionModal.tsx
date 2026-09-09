@@ -89,7 +89,7 @@ export function AddExhibitionModal({ isOpen, onClose, onAdd }: AddExhibitionModa
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" dir="rtl">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="bg-white text-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
         <div className="flex justify-between items-center p-4 border-b border-slate-100 bg-slate-50">
           <h3 className="font-bold text-slate-800">إضافة معرض جديد</h3>
           <button onClick={onClose} disabled={isUploading} className="text-slate-400 hover:text-slate-700">
@@ -100,12 +100,12 @@ export function AddExhibitionModal({ isOpen, onClose, onAdd }: AddExhibitionModa
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">اسم المعرض</label>
-            <input required type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+            <input required type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-3 py-2 text-slate-900 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">دولة المعرض</label>
-            <input required type="text" value={country} onChange={(e) => setCountry(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
+            <input required type="text" value={country} onChange={(e) => setCountry(e.target.value)} className="w-full px-3 py-2 text-slate-900 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" />
           </div>
 
           <div className="flex gap-4 mb-2">
@@ -135,7 +135,7 @@ export function AddExhibitionModal({ isOpen, onClose, onAdd }: AddExhibitionModa
                 rows={4}
                 value={mediaUrls} 
                 onChange={(e) => setMediaUrls(e.target.value)} 
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none" 
+                className="w-full px-3 py-2 text-slate-900 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none resize-none" 
                 dir="ltr" 
                 placeholder="https://image1.jpg&#10;https://video1.mp4" 
               />
@@ -149,7 +149,7 @@ export function AddExhibitionModal({ isOpen, onClose, onAdd }: AddExhibitionModa
                 accept="image/*,video/*"
                 ref={fileInputRef}
                 onChange={(e) => setFiles(Array.from(e.target.files || []))} 
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-slate-50 text-sm" 
+                className="w-full px-3 py-2 text-slate-900 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-slate-50 text-sm" 
               />
               {files.length > 0 && (
                 <p className="text-xs text-indigo-600 mt-2 font-medium">تم تحديد {files.length} ملفات</p>

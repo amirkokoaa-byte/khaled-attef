@@ -32,6 +32,7 @@ export interface PortfolioData {
     company: string;
     yearsOfExperience: string;
     phoneNumbers: string[];
+    whatsappNumber?: string; // New WhatsApp
     emails: string[];
     facebookLink: string;
     websiteLink: string;
@@ -41,6 +42,9 @@ export interface PortfolioData {
   gallery: MediaItem[];
   studio: MediaItem[];
   exhibitions: ExhibitionItem[];
+  visitorCount?: number;
+  baseVisitorCount?: number;
+  mediaViewCount?: number;
 }
 
 export const defaultPortfolioData: PortfolioData = {
@@ -61,6 +65,7 @@ export const defaultPortfolioData: PortfolioData = {
     company: "مستقل",
     yearsOfExperience: "10 سنوات",
     phoneNumbers: ["+20 123 456 7890"],
+    whatsappNumber: "201234567890",
     emails: ["khaled@example.com"],
     facebookLink: "https://facebook.com",
     websiteLink: "https://example.com"
@@ -108,5 +113,8 @@ export const defaultPortfolioData: PortfolioData = {
     }
   ],
   studio: [],
-  exhibitions: []
+  exhibitions: [],
+  visitorCount: 0,
+  baseVisitorCount: 0,
+  mediaViewCount: 0
 };
