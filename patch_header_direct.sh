@@ -1,0 +1,1 @@
+sed -i 's/const \[isUploadingProfile, setIsUploadingProfile\] = useState(false);/const [isUploadingProfile, setIsUploadingProfile] = useState(false);\n  const [isUploadingBanner, setIsUploadingBanner] = useState(false);\n  const bannerInputRef = useRef<HTMLInputElement>(null);/g' src/components/Header.tsx

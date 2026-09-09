@@ -12,7 +12,8 @@ const firebaseConfig = {
 
 // Initialize Firebase only if config exists to prevent crashing in preview without env vars
 const app = firebaseConfig.apiKey ? initializeApp(firebaseConfig) : null;
-export const db = app ? getFirestore(app) : null;
+import { initializeFirestore } from 'firebase/firestore';
+export const db = app ? initializeFirestore(app, { experimentalForceLongPolling: true }) : null;
 
 // Helper to save to Firestore
 export const saveToFirebase = async (collectionName: string, id: string, data: any) => {

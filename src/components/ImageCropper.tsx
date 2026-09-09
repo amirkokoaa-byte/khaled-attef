@@ -24,6 +24,7 @@ interface ImageCropperProps {
 export function ImageCropper({ imageSrc, onCropDone, onCancel, aspectRatio = 1 }: ImageCropperProps) {
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
+  const [isFreeCrop, setIsFreeCrop] = useState(false);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
 
   const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
@@ -83,7 +84,7 @@ export function ImageCropper({ imageSrc, onCropDone, onCancel, aspectRatio = 1 }
             image={imageSrc}
             crop={crop}
             zoom={zoom}
-            aspect={aspectRatio}
+            aspect={isFreeCrop ? undefined : aspectRatio}
             onCropChange={setCrop}
             onCropComplete={onCropComplete}
             onZoomChange={setZoom}
@@ -105,6 +106,23 @@ export function ImageCropper({ imageSrc, onCropDone, onCancel, aspectRatio = 1 }
             />
           </div>
           
+          
+          {aspectRatio && aspectRatio !== 1 && (
+            <div className="flex items-center gap-3">
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="sr-only peer" 
+                  checked={isFreeCrop}
+                  onChange={(e) => setIsFreeCrop(e.target.checked)}
+                />
+                <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                <span className="mr-3 text-sm font-medium text-slate-300">
+                  عرض الصورة بالكامل (إلغاء تقييد الأبعاد)
+                </span>
+              </label>
+            </div>
+          )}
           <div className="flex gap-3 justify-end">
             <button
               onClick={onCancel}

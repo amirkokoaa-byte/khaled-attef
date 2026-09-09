@@ -1,7 +1,17 @@
+export type BannerEffect = 'Intro' | 'Love it' | 'Parallax' | 'Fade' | 'Slide';
+
+export interface BannerImage {
+  id: string;
+  url: string;
+  fullUrl?: string;
+  effect: BannerEffect;
+}
+
 export interface MediaItem {
   id: string;
   type: 'image' | 'video';
   url: string;
+  fullUrl?: string;
   thumbnailUrl: string;
   title: string;
   subtitle?: string;
@@ -23,8 +33,10 @@ export interface Job {
 
 export interface PortfolioData {
   bannerImage: string; // Legacy support
-  bannerImages?: string[]; // New multiple banners
+  bannerImages?: (string | BannerImage)[];
+  bannerInterval?: number; // Supported legacy string[] and new BannerImage[]
   profileImage: string;
+  profileImageFull?: string;
   aboutMe: {
     name: string;
     jobTitle: string; // Legacy support

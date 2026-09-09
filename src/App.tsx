@@ -1,3 +1,4 @@
+import { AboutCompany } from "./components/AboutCompany";
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -81,8 +82,9 @@ function MainApp() {
   };
 
   const handleUpdateAboutMe = (aboutMe: PortfolioData['aboutMe']) => updateDataAndSync({ ...data, aboutMe });
-  const handleUpdateProfile = (url: string) => updateDataAndSync({ ...data, profileImage: url });
-  const handleUpdateBanners = (urls: string[]) => updateDataAndSync({ ...data, bannerImages: urls });
+  const handleUpdateProfile = (url: string, fullUrl?: string) => updateDataAndSync({ ...data, profileImage: url, profileImageFull: fullUrl || data.profileImageFull });
+  const handleUpdateBanners = (banners: any[]) => updateDataAndSync({ ...data, bannerImages: banners });
+  const handleUpdateBannerInterval = (interval: number) => updateDataAndSync({ ...data, bannerInterval: interval });
   const handleEditGalleryItem = (updatedItem: MediaItem) => updateDataAndSync({ ...data, gallery: data.gallery.map(item => item.id === updatedItem.id ? updatedItem : item) });
   const handleDeleteGalleryItem = (id: string) => updateDataAndSync({ ...data, gallery: data.gallery.filter(item => item.id !== id) });
   const handleAddGalleryItem = (item: MediaItem) => updateDataAndSync({ ...data, gallery: [item, ...data.gallery] });
@@ -96,10 +98,10 @@ function MainApp() {
     <div className="min-h-screen flex flex-col font-sans bg-slate-900 text-slate-100 transition-colors duration-500">
       
       {/* Absolute top-left lang switch */}
-      <div className="absolute top-4 left-4 md:left-6 z-50">
+      <div className="fixed top-4 left-4 md:left-6 z-50">
         <button 
           onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}
-          className="magnetic p-2 bg-slate-800/90 hover:bg-slate-700 text-white rounded-full shadow-lg backdrop-blur-sm transition-all flex items-center justify-center font-bold text-xs w-10 h-10 border border-slate-700"
+          className="p-2 bg-slate-800/90 hover:bg-slate-700 text-white rounded-full shadow-lg backdrop-blur-sm transition-all flex items-center justify-center font-bold text-xs w-10 h-10 border border-slate-700"
         >
           {lang === 'ar' ? 'EN' : 'عربي'}
         </button>
@@ -115,9 +117,12 @@ function MainApp() {
       <Header 
         bannerImages={data.bannerImages || [data.bannerImage]}
         profileImage={data.profileImage}
+        profileImageFull={data.profileImageFull}
         isAdmin={isAdmin}
         onUpdateBanners={handleUpdateBanners}
         onUpdateProfile={handleUpdateProfile}
+        bannerInterval={data.bannerInterval}
+        onUpdateBannerInterval={handleUpdateBannerInterval}
       />
       
       <main className="flex-grow flex flex-col items-center w-full">
@@ -173,6 +178,7 @@ function MainApp() {
       </main>
 
       <ReviewsSection />
+      <AboutCompany />
       <Footer visitorCount={displayVisitorCount} />
 
       {/* Floating WhatsApp */}

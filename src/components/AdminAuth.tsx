@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { Settings, X, LogOut, KeyRound, Phone, Users, Eye } from 'lucide-react';
+import { Settings, X, LogOut, KeyRound, Phone, Users, Eye, Image as ImageIcon, Camera, Loader2, Trash2 } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import type { PortfolioData } from '../types';
+import type { PortfolioData, BannerImage, BannerEffect } from '../types';
+import { handleMediaUpload } from '../lib/upload';
+import { ImageCropper } from './ImageCropper';
+import { useAppContext } from '../context';
 
 interface AdminAuthProps {
   isAdmin: boolean;
@@ -16,8 +19,151 @@ export function AdminAuth({ isAdmin, setIsAdmin, data, onUpdateData }: AdminAuth
   const [newPassword, setNewPassword] = useState('');
   const [error, setError] = useState('');
   
+  
   const [whatsappNumber, setWhatsappNumber] = useState(data.aboutMe.whatsappNumber || '');
-  const [baseVisitorCount, setBaseVisitorCount] = useState(data.baseVisitorCount?.toString() || '0');
+  const [baseVisitorCount, setBaseVisitorCount] = useState((data.baseVisitorCount || 0).toString());
+  const { t } = useAppContext();
+
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [isUploadingProfile, setIsUploadingProfile] = useState(false);
+  const [showCropper, setShowCropper] = useState(false);
+  const [cropImage, setCropImage] = useState('');
+  const [showBannerCropper, setShowBannerCropper] = useState(false);
+  const [cropBannerImage, setCropBannerImage] = useState('');
+  const [originalBannerFile, setOriginalBannerFile] = useState<File | null>(null);
+  const [originalFile, setOriginalFile] = useState<File | null>(null);
+
+  const bannerInputRef = React.useRef<HTMLInputElement>(null);
+  const profileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const currentBanners = data.bannerImages || [data.bannerImage];
+  const normalizedBanners = currentBanners.map((b: any, idx: number) => {
+    if (typeof b === 'string') {
+      return { id: `legacy-${idx}`, url: b, fullUrl: b, effect: 'Fade' as BannerEffect };
+    }
+    return b;
+  });
+
+  const handleDeleteBanner = (id: string) => {
+    if (confirm('هل أنت متأكد من حذف هذه الصورة؟')) {
+      const newBanners = normalizedBanners.filter((b: any) => b.id !== id);
+      onUpdateData({ ...data, bannerImages: newBanners });
+    }
+  };
+
+  const dataURLtoFile = (dataurl: string, filename: string): File => {
+    let arr = dataurl.split(','),
+      mimeMatch = arr[0].match(/:(.*?);/),
+      mime = mimeMatch ? mimeMatch[1] : 'image/jpeg',
+      bstr = atob(arr[1]),
+      n = bstr.length,
+      u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new File([u8arr], filename, { type: mime });
+  };
+
+    const handleBannerSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setOriginalBannerFile(file);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropBannerImage(reader.result as string);
+      setShowBannerCropper(true);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = ''; // Reset input
+  };
+
+  const handleBannerCropDone = async (croppedDataUrl: string) => {
+    setShowBannerCropper(false);
+    if (!originalBannerFile) return;
+
+    const croppedFile = dataURLtoFile(croppedDataUrl, 'banner.jpg');
+    try {
+      setIsUploadingBanner(true);
+      const [croppedUrl, fullUrl] = await Promise.all([
+        handleMediaUpload(croppedFile, 'image'),
+        handleMediaUpload(originalBannerFile, 'image')
+      ]);
+
+      const newBanner: BannerImage = {
+        id: Date.now().toString(),
+        url: croppedUrl,
+        fullUrl: fullUrl,
+        effect: 'Fade' as BannerEffect
+      };
+
+      const currentBanners = data.bannerImages || [data.bannerImage];
+      const normalizedBanners = currentBanners.map((b: any, idx: number) => {
+        if (typeof b === 'string') {
+          return { id: `legacy-${idx}`, url: b, fullUrl: b, effect: 'Fade' as BannerEffect };
+        }
+        return b;
+      });
+
+      onUpdateData({
+        ...data,
+        bannerImages: [...normalizedBanners, newBanner]
+      });
+      alert('تم رفع صور الغلاف بنجاح');
+    } catch (err) {
+      console.error(err);
+      alert('حدث خطأ أثناء الرفع');
+    } finally {
+      setIsUploadingBanner(false);
+      setOriginalBannerFile(null);
+    }
+  };
+
+
+  const handleProfileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setOriginalFile(file);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropImage(reader.result as string);
+      setShowCropper(true);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = ''; // Reset input
+  };
+
+  const handleProfileCropDone = async (croppedDataUrl: string) => {
+    setShowCropper(false);
+    if (!originalFile) return;
+
+    const croppedFile = dataURLtoFile(croppedDataUrl, 'profile.jpg');
+    try {
+      setIsUploadingProfile(true);
+      // Upload both
+      const [croppedUrl, fullUrl] = await Promise.all([
+        handleMediaUpload(croppedFile, 'image'),
+        handleMediaUpload(originalFile, 'image')
+      ]);
+
+      onUpdateData({
+        ...data,
+        profileImage: croppedUrl,
+        profileImageFull: fullUrl
+      });
+      alert('تم تغيير الصورة الشخصية بنجاح');
+    } catch (err) {
+      console.error(err);
+      alert('حدث خطأ أثناء الرفع');
+    } finally {
+      setIsUploadingProfile(false);
+      setOriginalFile(null);
+    }
+  };
+
 
   const [storedPassword, setStoredPassword] = useLocalStorage('admin-password-v1', '0000');
 
@@ -120,7 +266,74 @@ export function AdminAuth({ isAdmin, setIsAdmin, data, onUpdateData }: AdminAuth
                     </div>
                   </div>
 
+                  
+                                    <div className="pt-4 border-t border-slate-800 space-y-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="text-white font-medium">{t("إدارة الصور السريعة", "Quick Image Management")}</h4>
+                    </div>
+
+                    {/* Profile Image */}
+                    <div className="flex items-center gap-4 bg-slate-800/50 p-3 rounded-xl border border-slate-700">
+                      <img src={data.profileImage} className="w-12 h-12 rounded-full object-cover border border-slate-600" alt="Profile" />
+                      <div className="flex-1">
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          ref={profileInputRef} 
+                          onChange={handleProfileSelect} 
+                        />
+                        <button 
+                          type="button" 
+                          onClick={() => profileInputRef.current?.click()}
+                          disabled={isUploadingProfile}
+                          className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-400 border border-indigo-500/30 rounded-lg transition-colors text-xs font-bold"
+                        >
+                          {isUploadingProfile ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+                          {t("تغيير الصورة الشخصية", "Change Profile Image")}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Timeline Banners */}
+                    <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-slate-300 font-medium">صور الغلاف ({normalizedBanners.length})</span>
+                        <input 
+                          type="file" accept="image/*"
+                          className="hidden" 
+                          ref={bannerInputRef} 
+                          onChange={handleBannerSelect} 
+                        />
+                        <button 
+                          type="button" 
+                          onClick={() => bannerInputRef.current?.click()}
+                          disabled={isUploadingBanner}
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-indigo-400 border border-slate-600 rounded-lg transition-colors text-xs font-bold"
+                        >
+                          {isUploadingBanner ? <Loader2 className="w-3 h-3 animate-spin" /> : <ImageIcon className="w-3 h-3" />}
+                          {t("إضافة", "Add")}
+                        </button>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-2">
+                        {normalizedBanners.map((banner: any) => (
+                          <div key={banner.id} className="relative w-16 h-12 rounded-md overflow-hidden border border-slate-700 group">
+                            <img src={banner.url} className="w-full h-full object-cover" alt="Banner" />
+                            <button 
+                              onClick={() => handleDeleteBanner(banner.id)}
+                              className="absolute inset-0 bg-red-500/80 hidden group-hover:flex items-center justify-center text-white backdrop-blur-sm transition-all"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
                   <form onSubmit={handleSaveSettings} className="space-y-4 border-t border-slate-800 pt-4">
+
                     <div>
                       <label className="block text-sm font-medium text-slate-300 mb-1 flex items-center gap-2">
                         <Phone className="w-4 h-4" />
@@ -195,9 +408,29 @@ export function AdminAuth({ isAdmin, setIsAdmin, data, onUpdateData }: AdminAuth
                 </div>
               )}
             </div>
+
           </div>
         </div>
       )}
+      
+      {showBannerCropper && (
+        <ImageCropper 
+          imageSrc={cropBannerImage}
+          onCropDone={handleBannerCropDone}
+          onCancel={() => { setShowBannerCropper(false); setOriginalBannerFile(null); }}
+          aspectRatio={21 / 9}
+        />
+      )}
+
+      {showCropper && (
+        <ImageCropper 
+          imageSrc={cropImage}
+          onCropDone={handleProfileCropDone}
+          onCancel={() => { setShowCropper(false); setOriginalFile(null); }}
+          aspectRatio={1}
+        />
+      )}
     </>
+
   );
 }
